@@ -37,7 +37,7 @@ for folder in subfolders:
                     dirs_exist_ok=True)
 
 # convert all posts
-files = [ f for f in glob.glob(f"{src_path}/*.md")]
+files = [ f for f in glob.glob(f"{src_path}/*.md") if not f == f"{src_path}/index.md"]
 posts = []
 
 # store metadata of each document in this array, grouped by template,
@@ -76,6 +76,10 @@ for file in files:
 
 
 # TODO: add config file for overview page
-index_context = {"posts":pages["blog"]}
+print(pages["blog"][0]["filename"])
+
+# parse index.md
+
+index_context = {"posts":pages["blog"], "title":"test_title"}
 
 write_html(index_template, index_context, os.path.join(build_path, "index.html"))
