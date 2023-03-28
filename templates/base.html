@@ -7,7 +7,7 @@
     </style>
 
 </head>
-<body class="sans-serif navy bg-light-green" >
+<body class="sans-serif {{ fg_color_class }} {{ bg_color_class }} " >
     
     <div id="header" class="pt4 pr4 pl4 tr">
 	    <!-- <h1> {{ title }} </h1> TODO: make this setable and add links-->
@@ -18,7 +18,7 @@
         {% endblock %}
     </div>
 
-    <div id="content" class="pa3">
+    <div id="content" class="w-70 center pt3">
 
     	<div class="fl w-25">
     		<div id="content_left">{% block content_left %}{% endblock %}</div>

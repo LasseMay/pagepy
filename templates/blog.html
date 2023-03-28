@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+
+{% set bg_color_class = meta.color_1 %} <!-- pass title to base.html -->
+{% set fg_color_class = meta.color_2 %} <!-- pass title to base.html -->
+
 {% block content_left%}
 <!-- <div class="mt4 pa2 br-pill br1 ba f6" style="float: left"> home </div> -->	
 <!-- <img style="height: 50px; float: left; " src = "images/logo.svg"/>  --> <!-- todo, make optional from pageparser-->
@@ -9,6 +13,7 @@
 	{{ meta.subtitle }}
 	</h2>
 {% endblock %}
+
 {% block content_right %}
 	{{ writing }}
 {% endblock %}

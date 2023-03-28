@@ -5,7 +5,6 @@ import markdown
 import frontmatter
 import shutil
 import os
-from collections import defaultdict
 
 def write_html(template,context,path):
     content = template.render(context)
@@ -17,12 +16,10 @@ src_path = "src"
 build_path = "out"
 
 # TODO: make these parameters that can be set in a config
+# design it in a way, that templates do not have to be registered here explicitly, except for index
 environment = Environment(loader=FileSystemLoader("templates/"))
 index_template = environment.get_template("index.html")
-blog_template = environment.get_template("blog.html")
-
-# get a matchingn template as defined in the metadata of the respective file
-kwrd2template = {"blog":blog_template}
+#blog_template = environment.get_template("blog.html")
 
 subfolders = [ f.path for f in os.scandir(src_path) if f.is_dir() ]
 
@@ -36,15 +33,21 @@ for folder in subfolders:
                     ignore_dangling_symlinks=False,
                     dirs_exist_ok=True)
 
-# convert all posts
-files = [ f for f in glob.glob(f"{src_path}/*.md") if not f == f"{src_path}/index.md"]
-posts = []
+
+# parse Landing page. parse markdown and handle special markers (replace them later with file list)
+index_file = os.path.join(src_path, "index.md")
+index_text = frontmatter.load(index_file)
+
+# list of all md files except index.md 
+files = [ f for f in glob.glob(f"{src_path}/*.md") if not f == index_file]
 
 # store metadata of each document in this array, grouped by template,
-# so that one can easily create overview pages.
-# pages{blog:[]}
+# so that one can easily create overview pages. different templates for photos/blog/post/project/pages/cv/tutorials
+# pages{ blog:["writing":<str>, "meta":<dict>] }
 pages = {} 
+kwrd2template = {} # store template objects and make the accesible via keyword
 
+# loop over files once just to get a list of all of the templates being used and for storing metadata
 for file in files:
     
     # metadata associated to each md file in src
@@ -56,30 +59,36 @@ for file in files:
     
     # parse content, and separate metadata
     text = frontmatter.load(file)
-    meta.update(text.metadata) 
-    
+    meta.update(index_text.metadata) # general 
+    meta.update(text.metadata)       # page specific (can override general settings) 
+   
     # extract actual text
     html = markdown.markdown(text.content, extensions=[WikiLinkExtension(end_url=".html")])
 
-    # get context for rendering metadata and content
-    context = {"writing":html, "meta":meta}
+    # set context for rendering metadata and content
+    context = {"writing":html, "meta":meta }
    
-    # get the matching template 
-    templ = kwrd2template[meta["template"]] # the template is defined in the md file itself
-    write_html(templ, context, os.path.join(build_path, meta["filename"]))
-   
-    # add to pages dict so that we can generate overview pages
-    if not meta["template"] in pages.keys():
-        pages[meta["template"]] = []
-        
-    pages[meta["template"]].append(meta)
+    # if the requested template is new, get it and add to dict for later
+    templ_str = meta["template"]
+    if not templ_str in pages.keys():
+        kwrd2template[templ_str] = environment.get_template(f"{templ_str}.html")
+        pages[templ_str] = []
+      
+    # add the context to the pages dict
+    pages[templ_str].append(context)
 
+# then render every page
+for template in pages.keys():    # loop over differnet kinds of templates
+    for page_context in pages[template]: # render every page of a given category
+        templ = kwrd2template[page_context["meta"]["template"]]
+        write_html(templ, page_context, os.path.join(build_path, page_context["meta"]["filename"]))
 
-# TODO: add config file for overview page
-print(pages["blog"][0]["filename"])
+# save index html
+# TODO: 
+# in index md, define 
+# top nav bar links (list) 
+# and ways to create overview/list pages for each content template
 
-# parse index.md
-
-index_context = {"posts":pages["blog"], "title":"test_title"}
-
+index_context = {"posts":[f["meta"] for f in pages["blog"]],"title":"test_title"}
+index_context["meta"] = index_text.metadata
 write_html(index_template, index_context, os.path.join(build_path, "index.html"))
