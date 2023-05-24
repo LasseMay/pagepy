@@ -2,42 +2,55 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" href="https://unpkg.com/tachyons@4.12.0/css/tachyons.min.css"/>
-    <title>{% block title %}{% endblock %} - My Webpage</title>
+    <title> - My Webpage</title>
     <style>
     </style>
 
 </head>
-<body class="sans-serif {{ fg_color_class }} {{ bg_color_class }} " >
+<body class="sans-serif bg-light-green purple " >
     
     <div id="header" class="pt4 pr4 pl4 tr">
-	    <!-- <h1> {{ title }} </h1> TODO: make this setable and add links-->
+	    <!-- <h1>  </h1> TODO: make this setable and add links-->
 	    <!-- <span class="pl3 pr3 pt3 pb3 mt2 center no-underline br-pill ba b--navy bg-animate hover-bg-green b bw1"> Link1 | Link2 | Link3 </span> -->
 	    <span class="pl3 pr3 pt3 pb3 mt2 center no-underline b "> 
-		{% for link in links %}
-			<a class="{{ fg_color_class}}" href="{{ link }}.html"> {{ link }} </a> | 
-		{% endfor %}
+		
+			<a class="bg-light-green" href="test4.html"> test4 </a> | 
+		
+			<a class="bg-light-green" href="blog.html"> blog </a> | 
+		
 	    </span> 
         
-	{% block header%}
+	
         	<!--&copy; Copyright 2008 by <a href="http://domain.invalid/">you</a>. -->
-        {% endblock %}
+        
     </div>
 
     <div id="content" class="w-70 center pt3">
 
     	<div class="fl w-25">
-    		<div id="content_left">{% block content_left %}{% endblock %}</div>
+    		<div id="content_left">
+<!-- <div class="mt4 pa2 br-pill br1 ba f6" style="float: left"> home </div> -->	
+<!-- <img style="height: 50px; float: left; " src = "images/logo.svg"/>  --> <!-- todo, make optional from pageparser-->
+	<h1 class="f2 tr pr4 pt4 mr4 bt bw1 sans-serif">
+	notherpost
+	</h1>
+	<h2 class="f3 tr pr4 mr4 sans-serif">
+	
+	</h2>
+</div>
     	</div>
 
     	<div class="fl w-75">
-    		<div id="content_right">{% block content_right %}{% endblock %}</div>
+    		<div id="content_right">
+	<h1>test</h1>
+</div>
     	</div>
  
     </div>
     <div id="footer">
-        {% block footer %}
+        
         	<!--&copy; Copyright 2008 by <a href="http://domain.invalid/">you</a>. -->
-        {% endblock %}
+        
     </div>
 </body>
 </html>
