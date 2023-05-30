@@ -8,10 +8,47 @@ import os
 import re
 import copy
 
+
+def reg1(context, pages):
+    return "reg1"
+
+def reg2(context, pages):
+    return "reg2"
+
+def blog(context, pages):
+    print("hello from blog filter")
+    print(context)
+    print()
+    print(pages)
+    print()
+    return "text from blog filter"
+
+filter_functions = {"reg1":reg1, "reg2":reg2, "blog":blog}
+
+# TODO: make nicer by having a dict that matches key to a function that takes a (user implemented) copy of the context and returns a new contex
+# TODO: also make the marker user defined
+def handle_regex(context, pages):
+    regexl = r"<p>\+\+\+"
+    regexr = r"\+\+\+<\/p>"
+    marker = regexl+"(.*)"+regexr
+
+    writing = copy.deepcopy(context["writing"])
+    keys = re.findall(marker,writing)
+    for key in keys:
+        if key in filter_functions.keys(): 
+            to_be_replaced = regexl+key+regexr
+            writing = (re.sub(to_be_replaced,filter_functions[key](context,pages),writing))
+    
+    return writing
+
 def write_html(template,context,path):
     content = template.render(context)
     with open(path, mode="w", encoding="utf-8") as outfile:
         outfile.write(content)
+
+#####################
+# Setup and Prepare #
+#####################
 
 # paths
 src_path = "src"
@@ -21,8 +58,6 @@ build_path = "out"
 # design it in a way, that templates do not have to be registered here explicitly, except for index
 environment = Environment(loader=FileSystemLoader("templates/"))
 index_template = environment.get_template("index.html")
-#blog_template = environment.get_template("blog.html")
-
 subfolders = [ f.path for f in os.scandir(src_path) if f.is_dir() ]
 
 # copy subfolders that contain e.g. media over to out dir
@@ -36,7 +71,7 @@ for folder in subfolders:
                     dirs_exist_ok=True)
 
 
-# parse Landing page. parse markdown and handle special markers (replace them later with file list)
+# parse Landing page. 
 index_file = os.path.join(src_path, "index.md")
 index_text = frontmatter.load(index_file)
 
@@ -49,7 +84,11 @@ files = [ f for f in glob.glob(f"{src_path}/*.md") if not f == index_file]
 pages = {} 
 kwrd2template = {} # store template objects and make the accesible via keyword
 
-# loop over files once just to get a list of all of the templates being used and for storing metadata
+
+############################################################
+# first parse all files and store metadata and content #####
+############################################################
+
 for file in files:
     
     # metadata associated to each md file in src
@@ -76,48 +115,34 @@ for file in files:
         #meta["template"] = "default" # for now use the blog template to render. in the future, this might change
         meta["template"] = "blog"
     
+    # if the template is new, get it and add to dict for later
     templ_str = meta["template"] 
-
     if not templ_str in pages.keys():
         kwrd2template[templ_str] = environment.get_template(f"{templ_str}.html")
         pages[templ_str] = []
       
-    # add the context to the pages dict
+    # add the context to the pages dict so they are ordered by template
     pages[templ_str].append(context)
 
-# CONTINUE HERE
-# TODO: make nicer by having a dict that matches key to a function that takes a (user implemented) copy of the context and returns a new contex
-# TODO: also make the marker user defined
-def handle_regex(context):
-    regexl = r"<p>\+\+\+"
-    regexr = r"\+\+\+<\/p>"
-    marker = regexl+"(.*)"+regexr
 
-    # handle all keys TODO: handle these automatically i.e. loop through templates
-    writing = copy.deepcopy(context["writing"])
-    keys = re.findall(marker,writing)
-    for key in keys:
-        if key == r"blog":
-            to_be_replaced = regexl+key+regexr
-            
-            writing = (re.sub(to_be_replaced,"<b> blog list goes here </b>",writing))
-            #re.sub(context["writing"],to_be_replaced,"worksout")
-    
-    return writing
+#######################################
+# loop over all pages and render them #
+#######################################
 
-# then render every page
-for template in pages.keys():    # loop over differnet kinds of templates
-    for page_context in pages[template]: # render every page of a given category
+for template in pages.keys():                                   # loop over differnet kinds of templates
+    for page_context in pages[template]:                        # render every page of a given category
+        page_context["writing"] = handle_regex(page_context,pages)    # handle markers in text
         templ = kwrd2template[page_context["meta"]["template"]]
-        # before writing check for regexs e.g. for rendering file lists
-        page_context["writing"] = handle_regex(page_context)
         write_html(templ, page_context, os.path.join(build_path, page_context["meta"]["filename"]))
 
-print(pages)
-# save index html
+###################
+# save index html #
+###################
+
 # TODO: in index.md let the user procide a list of top bar links to pages
-# for every page
 index_context = {"posts":[f["meta"] for f in pages["blog"]],
         "title":"test_title"}
 index_context["meta"] = index_text.metadata
 write_html(index_template, index_context, os.path.join(build_path, "index.html"))
+
+print(pages)
