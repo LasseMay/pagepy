@@ -7,7 +7,7 @@ import shutil
 import os
 import re
 import copy
-
+import pprint
 
 def reg1(context, pages):
     return "reg1"
@@ -15,13 +15,22 @@ def reg1(context, pages):
 def reg2(context, pages):
     return "reg2"
 
+# TODO: generalize this for every type of template
 def blog(context, pages):
     print("hello from blog filter")
-    print(context)
+    pprint.pprint(context)
     print()
-    print(pages)
+    pprint.pprint(pages)
     print()
-    return "text from blog filter"
+    out_str = "<ul>"
+    for page in pages["blog"]:
+        # TODO: make this a link to the actual page
+        out_str += "<li>"
+        out_str += page["meta"]["title"]
+        out_str += "</li>"
+    out_str += "</ul>"
+
+    return out_str
 
 filter_functions = {"reg1":reg1, "reg2":reg2, "blog":blog}
 

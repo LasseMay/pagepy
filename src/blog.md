@@ -1,5 +1,5 @@
 ---
-zitle: blog
+title: blog
 ---
 
 # test1
