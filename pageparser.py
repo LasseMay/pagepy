@@ -8,6 +8,7 @@ import os
 import re
 import copy
 import pprint
+import json
 
 def reg1(context, pages):
     return "reg1"
@@ -17,11 +18,6 @@ def reg2(context, pages):
 
 # TODO: generalize this for every type of template
 def blog(context, pages):
-    print("hello from blog filter")
-    pprint.pprint(context)
-    print()
-    pprint.pprint(pages)
-    print()
     out_str = "<ul>"
     for page in pages["blog"]:
         # TODO: make this a link to the actual page
@@ -44,6 +40,12 @@ def handle_regex(context, pages):
     writing = copy.deepcopy(context["writing"])
     keys = re.findall(marker,writing)
     for key in keys:
+        func_call = key.split("|")
+        func_name = func_call[0]
+        print(func_name)
+        if len(func_call) > 1:
+            func_args = json.loads(func_call[1:][0])
+            print(func_args)
         if key in filter_functions.keys(): 
             to_be_replaced = regexl+key+regexr
             writing = (re.sub(to_be_replaced,filter_functions[key](context,pages),writing))
@@ -60,7 +62,8 @@ def write_html(template,context,path):
 #####################
 
 # paths
-src_path = "src"
+src_path = "src/md"
+plugin_path = "src/plugins"
 build_path = "out"
 
 # TODO: make these parameters that can be set in a config
@@ -154,4 +157,3 @@ index_context = {"posts":[f["meta"] for f in pages["blog"]],
 index_context["meta"] = index_text.metadata
 write_html(index_template, index_context, os.path.join(build_path, "index.html"))
 
-print(pages)
