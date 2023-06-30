@@ -1,3 +1,6 @@
+import importlib.machinery
+import importlib.util
+import pkgutil
 from jinja2 import Environment, FileSystemLoader
 from markdown.extensions.wikilinks import WikiLinkExtension
 import glob
@@ -9,6 +12,17 @@ import re
 import copy
 import pprint
 import json
+
+def load_plugins(plugin_dir):
+    for file in os.listdir(plugin_dir):
+        if file.endswith(".py"):
+            # TODO: fix names
+            file = (os.path.join(plugin_dir, file))
+            loader = importlib.machinery.SourceFileLoader(file, file)
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            mod = importlib.util.module_from_spec(spec)
+            loader.exec_module(mod)
+            mod.print_hello()
 
 def reg1(context, pages):
     return "reg1"
@@ -33,11 +47,15 @@ filter_functions = {"reg1":reg1, "reg2":reg2, "blog":blog}
 # TODO: make nicer by having a dict that matches key to a function that takes a (user implemented) copy of the context and returns a new contex
 # TODO: also make the marker user defined
 def handle_regex(context, pages):
+
     regexl = r"<p>\+\+\+"
     regexr = r"\+\+\+<\/p>"
     marker = regexl+"(.*)"+regexr
 
+    # make sure, we do not mutate the original context and pages
     writing = copy.deepcopy(context["writing"])
+    pages = copy.deepcopy(pages)
+
     keys = re.findall(marker,writing)
     for key in keys:
         func_call = key.split("|")
@@ -65,6 +83,8 @@ def write_html(template,context,path):
 src_path = "src/md"
 plugin_path = "src/plugins"
 build_path = "out"
+
+load_plugins(plugin_path)
 
 # TODO: make these parameters that can be set in a config
 # design it in a way, that templates do not have to be registered here explicitly, except for index
